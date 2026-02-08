@@ -1,0 +1,243 @@
+openapi: 3.0.3
+info:
+  title: AuthHub API
+  description: >
+    AuthHub is a centralized OAuth token management service.
+    It manages third-party OAuth provider tokens (Google, Microsoft, etc.)
+    and exposes secure APIs to retrieve valid access tokens.
+  version: 1.0.0
+
+servers:
+  - url: https://authhub.company.com
+
+security:
+  - bearerAuth: []
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    ProviderSummary:
+      type: object
+      properties:
+        id:
+          type: string
+          example: google
+        displayName:
+          type: string
+          example: Google
+        scopes:
+          type: array
+          items:
+            type: string
+
+    AccessTokenResponse:
+      type: object
+      properties:
+        accessToken:
+          type: string
+          description: Short-lived OAuth access token
+        expiresAt:
+          type: string
+          format: date-time
+
+    ProviderStatus:
+      type: object
+      properties:
+        connected:
+          type: boolean
+        scopes:
+          type: array
+          items:
+            type: string
+        expiresAt:
+          type: string
+          format: date-time
+
+    AuthorizationUrlResponse:
+      type: object
+      properties:
+        authorizationUrl:
+          type: string
+
+    GenericStatusResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: CONNECTED
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+          example: PROVIDER_REAUTH_REQUIRED
+        message:
+          type: string
+
+paths:
+
+  /oauth/providers:
+    get:
+      summary: List supported OAuth providers
+      tags: [OAuth Providers]
+      responses:
+        '200':
+          description: List of providers
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  providers:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ProviderSummary'
+
+  /oauth/providers/{provider}/authorize:
+    post:
+      summary: Start OAuth consent flow
+      tags: [OAuth Providers]
+      parameters:
+        - name: provider
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Authorization URL
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthorizationUrlResponse'
+        '400':
+          description: Invalid provider
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /oauth/callback/{provider}:
+    get:
+      summary: OAuth callback endpoint
+      description: >
+        Called by OAuth providers after user consent.
+        Exchanges authorization code for tokens.
+      tags: [OAuth Providers]
+      parameters:
+        - name: provider
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: code
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: state
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Provider connected
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericStatusResponse'
+        '400':
+          description: Invalid or expired state
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /oauth/providers/{provider}/token:
+    get:
+      summary: Get valid OAuth access token
+      tags: [Tokens]
+      parameters:
+        - name: provider
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Valid access token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccessTokenResponse'
+        '401':
+          description: Unauthorized
+        '409':
+          description: Re-consent required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /oauth/providers/{provider}/status:
+    get:
+      summary: Get provider connection status
+      tags: [OAuth Providers]
+      parameters:
+        - name: provider
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Provider status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProviderStatus'
+
+  /oauth/providers/{provider}:
+    delete:
+      summary: Revoke and unlink provider
+      tags: [OAuth Providers]
+      parameters:
+        - name: provider
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Provider revoked
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericStatusResponse'
+
+  /internal/oauth/providers/{provider}/token:
+    get:
+      summary: Internal service access token fetch
+      tags: [Internal]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: provider
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Valid access token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccessTokenResponse'

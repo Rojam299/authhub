@@ -1,0 +1,37 @@
+spring:
+  application:
+    name: authhub
+  h2:
+    console: { enabled: true, path: /h2 }
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: http://localhost:8080/realms/master # use mailhub realm
+#          jwk-set-uri: http://localhost:8080/realms/master/protocol/openid-connect/certs
+
+server:
+  port: 8085
+
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, info
+
+crypto:
+  master-key: ${MASTER_KEY_ENCRYPTION}
+
+authhub:
+  oauth:
+    providers:
+      gmail:
+        id: gmail
+        client-id: ${GOOGLE_CLIENT_ID}
+        client-secret: ${GOOGLE_CLIENT_SECRET}
+        authorize-uri: https://accounts.google.com/o/oauth2/v2/auth
+        token-uri: https://oauth2.googleapis.com/token
+        redirect-uri: http://localhost:8085/oauth/gmail/callback
+        scopes: ["https://www.googleapis.com/auth/gmail.readonly"]
+        params: "&response_type=code&prompt=consent&access_type=offline"
