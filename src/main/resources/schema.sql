@@ -19,8 +19,8 @@ CREATE TABLE IF NOT EXISTS oauth_account (
     CONSTRAINT uq_oauth_account UNIQUE (principal_id, provider_id, provider_user_id)
 );
 
-CREATE INDEX ix_principal_provider
+CREATE INDEX IF NOT EXISTS ix_principal_provider
     ON oauth_account (principal_id, provider_id);
 
-CREATE INDEX ix_provider_user
+CREATE INDEX IF NOT EXISTS ix_provider_user
     ON oauth_account (provider_id, provider_user_id);
