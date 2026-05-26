@@ -1,8 +1,20 @@
 spring:
   application:
     name: authhub
-  h2:
-    console: { enabled: true, path: /h2 }
+  r2dbc:
+    url: r2dbc:postgresql://localhost:5432/authhub
+    username: ${POSTGRES_USERNAME}
+    password: ${POSTGRES_PASSWORD}
+  flyway:
+    enabled: true
+    url: jdbc:postgresql://localhost:5432/authhub
+    user: ${POSTGRES_USERNAME}
+    password: ${POSTGRES_PASSWORD}
+    locations: classpath:db/migration # location for flyway
+  sql:
+    init:
+      mode: always # Flyway did not work, using schema.sql
+
   security:
     oauth2:
       resourceserver:

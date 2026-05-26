@@ -9,7 +9,7 @@ CREATE TABLE oauth_account (
 
     token_expiry        TIMESTAMP NOT NULL,
 
-    scopes_json         JSONB NOT NULL,   -- ✅ NEW
+    scopes_json         JSONB NOT NULL,
 
     status              VARCHAR(50) NOT NULL,
 
