@@ -17,7 +17,7 @@ public class SecurityConfig {
         return httpSecurity
                 .csrf(ServerHttpSecurity.CsrfSpec::disable) // only needed for browsers
                 .authorizeExchange(exchanges -> exchanges
-                .pathMatchers("/actuator/**", "/test/**", "/oauth/**").permitAll()
+                .pathMatchers("/actuator/**", "/test/**").permitAll()
                 .pathMatchers("/h2/**").permitAll()
                 .anyExchange().authenticated())
                 .oauth2ResourceServer(oauth2 ->

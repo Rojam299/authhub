@@ -3,7 +3,6 @@ package ai.mailhub.authhub.adapter.in.web;
 
 import ai.mailhub.authhub.adapter.out.oauth.OAuthProvider;
 import ai.mailhub.authhub.adapter.out.oauth.OAuthProviderRegistry;
-import ai.mailhub.authhub.application.service.JwtPrincipalExtractor;
 import ai.mailhub.authhub.application.service.PrincipalIdService;
 import ai.mailhub.authhub.utils.OAuthStateUtil;
 import lombok.RequiredArgsConstructor;
@@ -11,10 +10,16 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 import reactor.core.publisher.Mono;
 
 import java.net.URI;
+
+import static reactor.netty.http.HttpConnectionLiveness.log;
 
 
 /**
@@ -36,27 +41,23 @@ public class OAuthAuthorizationController {
     private final PrincipalIdService principalIdService;
 
     @GetMapping("{providerId}/authorize")
-    public Mono<ResponseEntity<Void>> authorize(@PathVariable String providerId){
+    public Mono<ResponseEntity<Void>> authorize(@PathVariable String providerId, Authentication authentication){
 
+        log.info("AUTH TYPE = {}", authentication.getClass());
+        log.info("AUTH = {}", authentication);
         //TODO: Add request id to state, type logic to extract Req id
-        return JwtPrincipalExtractor.extract()
-                .map(principalIdService::derive)
-                .map(principal -> {
-                    String state = OAuthStateUtil.build(principal, providerId) ;
+        String principal = authentication.getName();
+        String state = OAuthStateUtil.build(principal, providerId) ;
+        OAuthProvider provider = providerRegistry.get(providerId) ;
+        logger.info("Provider : {} , auth url : {}", provider.id(), provider.buildAuthorizeUrl(state));
 
-                    OAuthProvider provider = providerRegistry.get(providerId) ;
-                    //TODO : Check and remove or logger.debug
-                    logger.info("Provider : {} , auth url : {}", provider.id(), provider.buildAuthorizeUrl(state));
+        String authUrl = provider.buildAuthorizeUrl(state);
 
-                    String authUrl = providerRegistry.get(providerId).buildAuthorizeUrl(state) ;
-
-                    return ResponseEntity
-                            .status(HttpStatus.FOUND)
-                            .location(URI.create(authUrl))
-                            .build();
-                        }
-                ) ;
+        return Mono.just(
+                ResponseEntity
+                        .status(HttpStatus.FOUND)
+                        .location(URI.create(authUrl))
+                        .build()
+        );
     }
-
-
 }

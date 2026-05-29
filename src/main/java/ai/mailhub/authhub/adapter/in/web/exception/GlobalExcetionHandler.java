@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
+import javax.naming.AuthenticationException;
 import java.time.Instant;
 
 /**
@@ -30,6 +31,9 @@ public class GlobalExcetionHandler {
     private static final String USER_HEADER = "X-User-Id";
     private static final String NO_REQUEST_ID = "No-request-id";
 
+
+
+
     @ExceptionHandler(IllegalStateException.class)
     public Mono<ResponseEntity<ProblemDetail>> handleIllegalStateException(IllegalStateException exception,
                                                                            ServerWebExchange exchange){
@@ -39,6 +43,20 @@ public class GlobalExcetionHandler {
                 exception.getMessage(),
                 exchange);
     }
+
+    @ExceptionHandler(AuthenticationException.class)
+    public Mono<ResponseEntity<ProblemDetail>> handleAuthenticationException(
+            AuthenticationException exception,
+            ServerWebExchange exchange) {
+
+        return buildProblem(
+                HttpStatus.UNAUTHORIZED,
+                "Unauthorized",
+                exception.getMessage(),
+                exchange
+        );
+    }
+
 
     @ExceptionHandler(IllegalArgumentException.class)
     public Mono<ResponseEntity<ProblemDetail>> handleIllegalArgumentException(IllegalArgumentException exception,
