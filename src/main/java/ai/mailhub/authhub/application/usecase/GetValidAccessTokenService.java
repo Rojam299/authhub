@@ -3,7 +3,6 @@ package ai.mailhub.authhub.application.usecase;
 import ai.mailhub.authhub.adapter.out.oauth.OAuthProviderClientRegistry;
 import ai.mailhub.authhub.application.port.in.GetValidAccessTokenUseCase;
 import ai.mailhub.authhub.application.port.out.OAuthAccountRepository;
-import ai.mailhub.authhub.application.service.JwtPrincipalExtractor;
 import ai.mailhub.authhub.application.service.PrincipalIdService;
 import ai.mailhub.authhub.domain.oauth.OAuthAccount;
 import ai.mailhub.authhub.domain.oauth.OAuthToken;
@@ -25,15 +24,11 @@ import java.time.Clock;
  * Input:
  * ExternalIdPrincipal (derived from JWT)
  * providerId (google, microsoft, etc)
+ * principal keycloak sub
  *
  * Output:
  * OAuthToken (runtime object)
  *
- * Requirement:
- * principalIdService → derive principalId
- * oauthAccountRepo   → load OAuthAccount from DB
- * cryptoService      → decrypt tokens (stub for now)
- * oauthClient        → call provider token endpoint
  *
  */
 
@@ -49,31 +44,26 @@ public class GetValidAccessTokenService implements GetValidAccessTokenUseCase {
 
 
     public Mono<OAuthToken> execute(
-            String providerId, String externalAccountId) {
+            String principal, String providerId, String externalAccountId ) {
 
-        return JwtPrincipalExtractor.extract()
-                .map(principalIdService::derive) //extPrincipal-> principalIdService.derive(extPrincipal)
-                .flatMap(principalId ->
-                        oAuthAccountRepository
-                                .findActiveByPrincipalAndProviderAndExternalAccount(principalId, providerId, externalAccountId)
-                                .switchIfEmpty(Mono.error(new IllegalStateException("No Oauth Account active or linked"))) //TODO :  Mono.error(new OAuthAccountNotLinkedException())
-                                .flatMap(oAuthAccount -> {
-                                    OAuthToken token = toOauthToken(oAuthAccount);
-                                    if (!token.isExpired(clock)) {
-                                        return Mono.just(token);
-                                    }
+         return oAuthAccountRepository
+                 .findActiveByPrincipalAndProviderAndExternalAccount(principal, providerId, externalAccountId)
+                 .switchIfEmpty(Mono.error((new IllegalStateException("No Oauth account active or linked"))))//TODO :  Mono.error(new OAuthAccountNotLinkedException())
+                 .flatMap(oAuthAccount -> {
+                     OAuthToken token = toOauthToken(oAuthAccount);
+                     if(!token.isExpired(clock)){
+                         return Mono.just(token) ;
+                     }
 
-                                    return providerClientRegistry
-                                            .get(providerId)
-                                            .refresh(oAuthAccount)
-                                            .flatMap(tokens ->
-                                                    oAuthAccountRepository.save(
-                                                            oAuthAccount.withRefreshedTokens(tokens, cryptoService))
-                                            )
-                                            .map(this::toOauthToken) ;
-                                })
-                );
-
+                     return providerClientRegistry
+                             .get(providerId)
+                             .refresh(oAuthAccount)
+                             .flatMap(tokens ->
+                                     oAuthAccountRepository
+                                             .save(oAuthAccount
+                                                     .withRefreshedTokens(tokens, cryptoService)))
+                             .map(this::toOauthToken) ;
+                 }) ;
     }
 
     private OAuthToken toOauthToken(OAuthAccount account) {

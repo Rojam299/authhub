@@ -9,6 +9,8 @@ import javax.crypto.SecretKey;
 
 
 /**
+ * THIS CLASS CAN BE REMOVED AS WE ARE NOW USING
+ * authentication.getName() (Keycloak sub) as principalId
  *
  * Boundary between domain and infra
  * Later replaced by Vault implementation

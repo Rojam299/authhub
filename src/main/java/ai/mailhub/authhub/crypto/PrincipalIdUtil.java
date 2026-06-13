@@ -8,6 +8,9 @@ import java.nio.charset.StandardCharsets;
 import java.util.HexFormat;
 
 /**
+ * THIS FILE CAN BE DELETED AS WE ARE NOT USING IT ANYMORE AND ARE
+ * authentication.getName() (Keycloak sub) as principalId
+ *
  * Pure crypto utility
  * No Spring, no config
  * Easy to replace later

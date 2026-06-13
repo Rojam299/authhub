@@ -4,5 +4,5 @@ import ai.mailhub.authhub.domain.oauth.OAuthToken;
 import reactor.core.publisher.Mono;
 
 public interface GetValidAccessTokenUseCase {
-    Mono<OAuthToken> execute(String providerId, String externalAccountId);
+    Mono<OAuthToken> execute(String principal, String providerId, String externalAccountId) ;
 }

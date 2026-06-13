@@ -6,7 +6,10 @@ import org.springframework.context.annotation.Configuration;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 import java.nio.charset.StandardCharsets;
-
+/*
+*  WE CAN REMOVE THIS CLASS AS NOW WE ARE USING
+ authentication.getName() (Keycloak sub) as principalId
+* */
 
 @Configuration
 public class CryptoConfig {

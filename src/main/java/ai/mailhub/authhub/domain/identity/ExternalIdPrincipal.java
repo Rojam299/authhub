@@ -2,6 +2,9 @@ package ai.mailhub.authhub.domain.identity;
 
 
 /**
+ * WE CAN REMOVE THIS CLASS AS NOW WE ARE USING
+ * authentication.getName() (Keycloak sub) as principalId
+ *
  * What it is
  * Represents who the user is, independent of MailHub, Keycloak, or any IdP.
  *
