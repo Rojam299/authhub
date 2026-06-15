@@ -44,6 +44,6 @@ authhub:
         client-secret: ${GOOGLE_CLIENT_SECRET}
         authorize-uri: https://accounts.google.com/o/oauth2/v2/auth
         token-uri: https://oauth2.googleapis.com/token
-        redirect-uri: http://localhost:8085/oauth/gmail/callback
+        redirect-uri: http://<AUTHUB_URL>/oauth/gmail/callback
         scopes: ["https://www.googleapis.com/auth/gmail.readonly"]
-        params: "&response_type=code&prompt=consent&access_type=offline"
+        params: "&prompt=consent&access_type=offline"
